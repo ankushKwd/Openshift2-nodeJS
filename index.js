@@ -1,44 +1,37 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 const cors = require("cors");
-const bodyParser = require('body-parser');
+const Conn = require("./db");
+const bookRoutes = require("./bookRoutes");
+const userRoutes = require("./userRoutes");
 
-// const userR = require('./userRouter')
-// const adminR = require('./adminRouter')
-const port = 4000;
 const app = express();
-app.use(cors());
+const port = 7000;
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+mongoose.set("strictQuery", true);
+const router = express.Router();
+app.use(router);
+router.use(cors());
+router.use(bodyParser.json());
+router.use(bodyParser.urlencoded({ extended: true }));
 
-const users = [
-  {
-    srNo : 1,
-    name : "Ankush",
-    surname : "Kawde"
-  },
-  {
-    srNo : 2,
-    name : "Akanksha",
-    surname : "Kawde"
-  },
-  {
-    srNo : 3,
-    name : "Ashwini",
-    surname : "Kawde"
-  },
-  {
-    srNo : 4,
-    name : "Kamal",
-    surname : "Kawde"
-  },
-  {
-    srNo : 5,
-    name : "Rajendra",
-    surname : "Kawde"
-  }
-]
+Conn()
+  .then(() => console.log("Connected Successfully...!!!"))
+  .catch((err) => console.log(err));
+
+router.use("/", (req, res) => {
+  res.send("Connected on Root Route");
+});
+
+router.get("/api/getUsers", userRoutes.getUsers);
+router.post("/api/createUser", userRoutes.createUser);
+
+router.get("/api/getBooks", bookRoutes.getBooks);
+router.post("/api/createBook", bookRoutes.createBook),
+  router.put("/api/updateBook", bookRoutes.updateBook),
+  router.delete("/api/deleteBook", bookRoutes.deleteBook);
 
 app.listen(port, () => {
-  console.log("Listening on Port ", port);
+  console.log("Listening on port", port);
 });
