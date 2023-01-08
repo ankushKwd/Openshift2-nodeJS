@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require("http");
+const Prometheus = require("prom-client");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -26,6 +28,30 @@ router.use("/", (req, res) => {
   req.log.info({ message: "Hello from Node.js Starter Application!" });
   res.send("Connected on Root Route");
 });
+
+Prometheus.collectDefaultMetrics();
+
+const requestHistogram = new Prometheus.Histogram({
+  name: "http_request_duration_seconds",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["code", "handler", "method"],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+});
+
+const requestTimer = (req, res, next) => {
+  const path = new URL(req.url, `http://${req.hostname}`).pathname;
+  const stop = requestHistogram.startTimer({
+    method: req.method,
+    handler: path,
+  });
+  res.on("finish", () => {
+    stop({
+      code: res.statusCode,
+    });
+  });
+  next();
+};
+
 
 // See: http://expressjs.com/en/4x/api.html#app.settings.table
 const PRODUCTION = app.get("env") === "production";
